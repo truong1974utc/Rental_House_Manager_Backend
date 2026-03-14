@@ -1,8 +1,13 @@
 import { Room, IRoom } from "../models/Room.js";
-import { IRoomQuery } from "../interfaces/roomQuery.js";
+import { IRoomQuery } from "../interfaces/Query.js";
+import { CreateRoomInput } from "../schemas/room.schema.js";
 
 export const RoomService = {
-    createRoom: async (roomData: IRoom) => {
+    createRoom: async (roomData: CreateRoomInput) => {
+        const existingRoom = await Room.findOne({ roomNumber: roomData.roomNumber });
+        if (existingRoom) {
+            throw new Error("Room already exists");
+        }
         const room = await Room.create(roomData);
         return room;
     },
@@ -11,22 +16,34 @@ export const RoomService = {
         return room;
     },
     getAllRooms: async (query: IRoomQuery) => {
-        const page = query.page || 1;
-        const limit = query.limit || 10;
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 10;
         const skip = (page - 1) * limit;
-        const filer: any = {};
+        const filter: any = {};
 
         if (query.search) {
-            filer.$or = [
+            filter.$or = [
                 { roomNumber: { $regex: query.search, $options: "i" } },
                 { type: { $regex: query.search, $options: "i" } },
                 { description: { $regex: query.search, $options: "i" } }
             ]
         }
 
+        if (query.status) {
+            filter.status = query.status;
+        }
+
+        if (query.type) {
+            filter.type = query.type;
+        }
+
+        if (query.maxPeople) {
+            filter.maxPeople = query.maxPeople;
+        }
+
         const [rooms, total] = await Promise.all([
-            Room.find(filer).skip(skip).limit(limit),
-            Room.countDocuments(filer)
+            Room.find(filter).skip(skip).limit(limit),
+            Room.countDocuments(filter)
         ])
         return {
             data: rooms,

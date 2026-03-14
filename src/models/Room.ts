@@ -1,5 +1,5 @@
 import mongoose, { Schema, InferSchemaType } from "mongoose"
-import { ROOM_STATUS, MAX_PEOPLE } from "../constants/enum.js"
+import { ROOM_STATUS, MAX_PEOPLE, ROOM_TYPE } from "../constants/enum.js"
 
 const roomSchema = new Schema(
     {
@@ -11,6 +11,7 @@ const roomSchema = new Schema(
         },
         type: {
             type: String,
+            enum: Object.values(ROOM_TYPE),
             required: true,
         },
         price: {
@@ -36,6 +37,7 @@ const roomSchema = new Schema(
         description: {
             type: String,
             trim: true,
+            default: "",
         },
         isDeleted: {
             type: Boolean,
@@ -44,10 +46,9 @@ const roomSchema = new Schema(
     },
     {
         timestamps: true,
+        versionKey: false,
     }
 )
-
-console.log("MAX_PEOPLE:", Object.values(MAX_PEOPLE))
 
 export type IRoom = InferSchemaType<typeof roomSchema>
 

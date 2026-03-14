@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { connectDB } from './config/db.js';
 import { errorHandler } from './middlewares/error.middleware.js';
-import roomRoutes from './routes/room.route.js';
+import indexRoutes from './routes/index.route.js';
 
 dotenv.config();
 connectDB();
@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(errorHandler);
 
 // Routes
-app.use('/api/rooms', roomRoutes);
+app.use('/api', indexRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

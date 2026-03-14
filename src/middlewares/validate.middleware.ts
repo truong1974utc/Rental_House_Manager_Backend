@@ -1,4 +1,4 @@
-import { ZodObject } from "zod"
+import { ZodObject, ZodError } from "zod"
 import { Request, Response, NextFunction } from "express"
 
 export const validate =
@@ -12,9 +12,11 @@ export const validate =
                 })
                 next()
             } catch (error: any) {
-                return res.status(400).json({
-                    message: "Validation error",
-                    errors: error.errors,
-                })
+                if (error instanceof ZodError) {
+                    return res.status(400).json({
+                        message: "Validation error",
+                        errors: error.issues,
+                    })
+                }
             }
         }

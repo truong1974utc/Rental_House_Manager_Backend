@@ -2,6 +2,7 @@ import { RoomService } from "../services/room.service.js";
 import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { CreateRoomInput, RoomIdParamsInput } from "../schemas/room.schema.js";
+import { IRoomQuery } from "../interfaces/Query.js";
 
 export const RoomController = {
     createRoom: asyncHandler(async (req: Request<CreateRoomInput>, res: Response) => {
@@ -13,11 +14,7 @@ export const RoomController = {
         res.status(200).json(room);
     }),
     getAllRooms: asyncHandler(async (req: Request, res: Response) => {
-        const query = {
-            page: req.query.page ? Number(req.query.page) : undefined,
-            limit: req.query.limit ? Number(req.query.limit) : undefined,
-            search: req.query.search as string | undefined
-        }
+        const query: IRoomQuery = req.query;
         const result = await RoomService.getAllRooms(query);
         res.status(200).json(result);
     }),
