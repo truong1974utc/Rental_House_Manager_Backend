@@ -1,5 +1,7 @@
 import { IServiceQuery } from "../interfaces/Query.js";
 import { Service } from "../models/Service.js";
+import { CreateServiceInput, UpdateServiceInput } from "../schemas/service.schema.js";
+import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
 
 export const ServiceService = {
     getAllServices: async (query: IServiceQuery) => {
@@ -38,5 +40,28 @@ export const ServiceService = {
                 count: services.length
             }
         }
+    },
+    createService: async (serviceData: CreateServiceInput) => {
+        const existingService = await Service.findOne({ name: serviceData.name });
+        if (existingService) {
+            throw new AlreadyExistsError("Service with this name already exists");
+        }
+        const service = await Service.create(serviceData);
+        return service;
+    },
+    getServiceById: async (id: string) => {
+        const service = await Service.findById(id);
+        if (!service) {
+            throw new Error("Service not found");
+        }
+        return service;
+    },
+    updateService: async (id: string, serviceData: UpdateServiceInput) => {
+        const service = await Service.findByIdAndUpdate(id, serviceData, { new: true });
+        return service;
+    },
+    deleteService: async (id: string) => {
+        const service = await Service.findByIdAndDelete(id);
+        return service;
     }
 }

@@ -1,18 +1,22 @@
 import { Room, IRoom } from "../models/Room.js";
 import { IRoomQuery } from "../interfaces/Query.js";
 import { CreateRoomInput } from "../schemas/room.schema.js";
+import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
 
 export const RoomService = {
     createRoom: async (roomData: CreateRoomInput) => {
         const existingRoom = await Room.findOne({ roomNumber: roomData.roomNumber });
         if (existingRoom) {
-            throw new Error("Room already exists");
+            throw new AlreadyExistsError("Room already exists");
         }
         const room = await Room.create(roomData);
         return room;
     },
     getRoomById: async (id: string) => {
         const room = await Room.findById(id);
+        if (!room) {
+            throw new Error("Room not found");
+        }
         return room;
     },
     getAllRooms: async (query: IRoomQuery) => {

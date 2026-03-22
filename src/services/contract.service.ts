@@ -1,6 +1,8 @@
 import { Contract } from "../models/Contract.js";
 import { IContractQuery } from "../interfaces/Query.js";
+import { CreateContractInput, UpdateContractInput } from "../schemas/contract.schema.js";
 import mongoose from "mongoose";
+import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
 
 export const ContractService = {
     getAllContracts: async (query: IContractQuery) => {
@@ -37,7 +39,6 @@ export const ContractService = {
                     preserveNullAndEmptyArrays: true
                 }
             },
-
             {
                 $lookup: {
                     from: "Rooms",
@@ -52,7 +53,6 @@ export const ContractService = {
                     preserveNullAndEmptyArrays: true
                 }
             },
-
             {
                 $match: {
                     ...match,
@@ -65,7 +65,6 @@ export const ContractService = {
                     })
                 }
             },
-
             { $skip: skip },
             { $limit: limit }
         ];
@@ -89,5 +88,32 @@ export const ContractService = {
                 count: contracts.length
             }
         };
+    },
+    createContract: async (contractData: CreateContractInput) => {
+        const existingContract = await Contract.findOne({
+            roomId: contractData.roomId
+        });
+        if (existingContract) {
+            throw new AlreadyExistsError("Contract for this room already exists");
+        }
+        const contract = await Contract.create(contractData);
+        return contract;
+    },
+    getContractById: async (id: string) => {
+        const contract = await Contract.findById(id)
+            .populate("roomId", "roomNumber type price")
+            .populate("tenantId", "fullName phone idCard");
+        if (!contract) {
+            throw new Error("Contract not found");
+        }
+        return contract;
+    },
+    updateContract: async (id: string, contractData: UpdateContractInput) => {
+        const contract = await Contract.findByIdAndUpdate(id, contractData, { new: true });
+        return contract;
+    },
+    deleteContract: async (id: string) => {
+        const contract = await Contract.findByIdAndDelete(id);
+        return contract;
     }
 }

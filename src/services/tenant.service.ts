@@ -1,6 +1,8 @@
 import { Tenant } from "../models/Tenant.js";
 import { ITenantQuery } from "../interfaces/Query.js";
+import { CreateTenantInput, UpdateTenantInput } from "../schemas/tenant.schema.js";
 import mongoose from "mongoose";
+import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
 
 export const TenantService = {
     getAllTenants: async (query: ITenantQuery) => {
@@ -23,7 +25,7 @@ export const TenantService = {
             filter.roomId = new mongoose.Types.ObjectId(query.roomId);
         }
 
-        if (query.isRepresent) {
+        if (query.isRepresent !== undefined) {
             filter.isRepresent = query.isRepresent;
         }
 
@@ -41,5 +43,37 @@ export const TenantService = {
                 count: tenants.length
             }
         }
+    },
+    createTenant: async (tenantData: CreateTenantInput) => {
+        const existingTenant = await Tenant.findOne({ idCard: tenantData.idCard });
+        if (existingTenant) {
+            throw new AlreadyExistsError("Tenant with this ID card already exists");
+        }
+        const tenant = await Tenant.create(tenantData);
+        return tenant;
+    },
+    getTenantById: async (id: string) => {
+        const tenant = await Tenant.findById(id);
+        if (!tenant) {
+            throw new Error("Tenant not found");
+        }
+        return tenant;
+    },
+    updateTenant: async (id: string, tenantData: UpdateTenantInput) => {
+        const tenant = await Tenant.findByIdAndUpdate(id, tenantData, {
+            returnDocument: "after",
+            runValidators: true
+        });
+        if (!tenant) {
+            throw new Error("Tenant not found");
+        }
+        return tenant;
+    },
+    deleteTenant: async (id: string) => {
+        const tenant = await Tenant.findByIdAndDelete(id);
+        if (!tenant) {
+            throw new Error("Tenant not found");
+        }
+        return tenant;
     }
 }

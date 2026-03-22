@@ -1,5 +1,7 @@
 import { Invoice } from "../models/Invoice.js";
 import { IInvoiceQuery } from "../interfaces/Query.js";
+import { CreateInvoiceInput, UpdateInvoiceInput } from "../schemas/invoice.schema.js";
+import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
 
 export const InvoiceService = {
     getAllInvoices: async (query: IInvoiceQuery) => {
@@ -24,7 +26,7 @@ export const InvoiceService = {
             match.year = query.year;
         }
 
-        if (query.isPaid) {
+        if (query.isPaid !== undefined) {
             match.isPaid = query.isPaid;
         }
 
@@ -43,7 +45,6 @@ export const InvoiceService = {
                     preserveNullAndEmptyArrays: true
                 }
             },
-
             {
                 $lookup: {
                     from: "Rooms",
@@ -94,7 +95,6 @@ export const InvoiceService = {
                     })
                 }
             },
-
             { $skip: skip },
             { $limit: limit }
         ];
@@ -118,5 +118,35 @@ export const InvoiceService = {
                 count: invoices.length
             }
         };
+    },
+    createInvoice: async (invoiceData: CreateInvoiceInput) => {
+        const existingInvoice = await Invoice.findOne({
+            roomId: invoiceData.roomId,
+            tenantId: invoiceData.tenantId,
+            month: invoiceData.month,
+            year: invoiceData.year
+        });
+        if (existingInvoice) {
+            throw new AlreadyExistsError("Invoice for this room, tenant, month and year already exists");
+        }
+        const invoice = await Invoice.create(invoiceData);
+        return invoice;
+    },
+    getInvoiceById: async (id: string) => {
+        const invoice = await Invoice.findById(id)
+            .populate("roomId", "roomNumber type price")
+            .populate("tenantId", "fullName phone idCard");
+        if (!invoice) {
+            throw new Error("Invoice not found");
+        }
+        return invoice;
+    },
+    updateInvoice: async (id: string, invoiceData: UpdateInvoiceInput) => {
+        const invoice = await Invoice.findByIdAndUpdate(id, invoiceData, { new: true });
+        return invoice;
+    },
+    deleteInvoice: async (id: string) => {
+        const invoice = await Invoice.findByIdAndDelete(id);
+        return invoice;
     }
 }

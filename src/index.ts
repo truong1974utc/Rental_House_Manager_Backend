@@ -11,10 +11,11 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(errorHandler);
 
 // Routes
 app.use('/api', indexRoutes);
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

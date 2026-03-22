@@ -12,9 +12,16 @@ export const createRoomSchema = z.object({
     })
 })
 
-export const roomIdParamsSchema = z.object({
-    id: z.string().min(1, "Room ID is required"),
+export const updateRoomSchema = z.object({
+    body: z.object({
+        roomNumber: z.string().optional(),
+        type: z.enum(ROOM_TYPE).optional(),
+        price: z.number().min(0).optional(),
+        area: z.number().min(0).optional(),
+        maxPeople: z.enum(MAX_PEOPLE).optional(),
+        description: z.string().optional(),
+    })
 })
 
 export type CreateRoomInput = z.infer<typeof createRoomSchema>["body"]
-export type RoomIdParamsInput = z.infer<typeof roomIdParamsSchema>
+export type UpdateRoomInput = z.infer<typeof updateRoomSchema>["body"]
