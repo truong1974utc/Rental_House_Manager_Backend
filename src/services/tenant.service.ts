@@ -2,6 +2,7 @@ import { Tenant } from "../models/Tenant.js";
 import { ITenantQuery } from "../interfaces/Query.js";
 import { CreateTenantInput, UpdateTenantInput } from "../schemas/tenant.schema.js";
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
 
 export const TenantService = {
@@ -49,7 +50,12 @@ export const TenantService = {
         if (existingTenant) {
             throw new AlreadyExistsError("Tenant with this ID card already exists");
         }
-        const tenant = await Tenant.create(tenantData);
+        
+        // Hash password before saving
+        const hashedPassword = await bcrypt.hash(tenantData.password, 10);
+        const dataToSave = { ...tenantData, password: hashedPassword };
+
+        const tenant = await Tenant.create(dataToSave);
         return tenant;
     },
     getTenantById: async (id: string) => {
