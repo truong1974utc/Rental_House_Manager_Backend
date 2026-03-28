@@ -1,4 +1,5 @@
 import { Room, IRoom } from "../models/Room.js";
+import { Tenant } from "../models/Tenant.js";
 import { IRoomQuery } from "../interfaces/Query.js";
 import { CreateRoomInput } from "../schemas/room.schema.js";
 import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
@@ -46,11 +47,25 @@ export const RoomService = {
         }
 
         const [rooms, total] = await Promise.all([
-            Room.find(filter).skip(skip).limit(limit),
+            Room.find(filter).skip(skip).limit(limit).lean(),
             Room.countDocuments(filter)
         ])
+
+        const roomIds = rooms.map(room => room._id);
+        const tenants = await Tenant.find({ roomId: { $in: roomIds }, isDeleted: false }).select("-password").lean();
+
+        const data = rooms.map(room => {
+            const roomTenants = tenants.filter(t => t.roomId?.toString() === room._id?.toString());
+            const representative = roomTenants.find(t => t.isRepresent) || null;
+            return {
+                ...room,
+                currentPeople: roomTenants.length,
+                representative
+            };
+        });
+
         return {
-            data: rooms,
+            data,
             meta: {
                 page,
                 limit,
