@@ -9,6 +9,7 @@ export const createRoomSchema = z.object({
         area: z.number().min(0, "Area must be greater than or equal to 0"),
         maxPeople: z.enum(MAX_PEOPLE),
         description: z.string().optional(),
+        representativeTenantId: z.string().nullable().optional(),
     })
 })
 
@@ -20,6 +21,7 @@ export const updateRoomSchema = z.object({
         area: z.number().min(0).optional(),
         maxPeople: z.enum(MAX_PEOPLE).optional(),
         description: z.string().optional(),
+        representativeTenantId: z.string().nullable().optional(),
     })
 })
 

@@ -26,16 +26,18 @@ export const TenantService = {
             filter.roomId = new mongoose.Types.ObjectId(query.roomId);
         }
 
-        if (query.isRepresent !== undefined) {
-            filter.isRepresent = query.isRepresent;
-        }
-
         const [tenants, total] = await Promise.all([
-            Tenant.find(filter).skip(skip).limit(limit),
+            Tenant.find(filter).populate('roomId').skip(skip).limit(limit),
             Tenant.countDocuments(filter)
         ])
+        
+        const data = tenants.map(t => {
+            const doc = t.toObject();
+            return { ...doc, room: doc.roomId, roomId: doc.roomId?._id || doc.roomId };
+        });
+
         return {
-            data: tenants,
+            data: data,
             meta: {
                 page,
                 limit,
@@ -53,20 +55,29 @@ export const TenantService = {
         
         // Hash password before saving
         const hashedPassword = await bcrypt.hash(tenantData.password, 10);
-        const dataToSave = { ...tenantData, password: hashedPassword };
+        const dataToSave = { ...tenantData, password: hashedPassword, role: "tenant" };
 
         const tenant = await Tenant.create(dataToSave);
         return tenant;
     },
     getTenantById: async (id: string) => {
-        const tenant = await Tenant.findById(id);
+        const tenant = await Tenant.findById(id).populate('roomId');
         if (!tenant) {
             throw new Error("Tenant not found");
         }
-        return tenant;
+        
+        const doc = tenant.toObject();
+        return { ...doc, room: doc.roomId, roomId: doc.roomId?._id || doc.roomId };
     },
     updateTenant: async (id: string, tenantData: UpdateTenantInput) => {
-        const tenant = await Tenant.findByIdAndUpdate(id, tenantData, {
+        const dataToUpdate = { ...tenantData };
+        
+        // Hash password if it's being updated
+        if (dataToUpdate.password) {
+            dataToUpdate.password = await bcrypt.hash(dataToUpdate.password, 10);
+        }
+        
+        const tenant = await Tenant.findByIdAndUpdate(id, dataToUpdate, {
             returnDocument: "after",
             runValidators: true
         });

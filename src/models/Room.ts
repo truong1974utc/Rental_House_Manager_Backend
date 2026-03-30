@@ -39,6 +39,11 @@ const roomSchema = new Schema(
             trim: true,
             default: "",
         },
+        representativeTenantId: {
+            type: Schema.Types.ObjectId,
+            ref: "Tenant",
+            default: null,
+        },
         isDeleted: {
             type: Boolean,
             default: false,

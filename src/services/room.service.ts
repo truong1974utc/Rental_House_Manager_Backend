@@ -14,11 +14,14 @@ export const RoomService = {
         return room;
     },
     getRoomById: async (id: string) => {
-        const room = await Room.findById(id);
+        const room = await Room.findById(id).populate("representativeTenantId", "-password");
         if (!room) {
             throw new Error("Room not found");
         }
-        return room;
+        const doc = room.toObject ? room.toObject() : room;
+        const representative = doc.representativeTenantId || null;
+        delete (doc as any).representativeTenantId;
+        return { ...doc, representative };
     },
     getAllRooms: async (query: IRoomQuery) => {
         const page = Number(query.page) || 1;
@@ -46,23 +49,26 @@ export const RoomService = {
             filter.maxPeople = query.maxPeople;
         }
 
-        const [rooms, total] = await Promise.all([
-            Room.find(filter).skip(skip).limit(limit).lean(),
-            Room.countDocuments(filter)
-        ])
+        const allRooms = await Room.find(filter).populate("representativeTenantId", "-password").lean();
+        const total = allRooms.length;
 
-        const roomIds = rooms.map(room => room._id);
-        const tenants = await Tenant.find({ roomId: { $in: roomIds }, isDeleted: false }).select("-password").lean();
+        const roomIds = allRooms.map(room => room._id);
+        const tenants = await Tenant.find({ roomId: { $in: roomIds }, isDeleted: false }).select("_id roomId").lean();
 
-        const data = rooms.map(room => {
+        const allData = allRooms.map(room => {
             const roomTenants = tenants.filter(t => t.roomId?.toString() === room._id?.toString());
-            const representative = roomTenants.find(t => t.isRepresent) || null;
+            const representative = room.representativeTenantId || null;
+            const { representativeTenantId, ...rest } = room as any;
+            
             return {
-                ...room,
+                ...rest,
                 currentPeople: roomTenants.length,
                 representative
             };
-        });
+        }).sort((a, b) => (a.roomNumber || "").localeCompare(b.roomNumber || ""));
+
+        // Phân trang sau khi sắp xếp
+        const data = allData.slice(skip, skip + limit);
 
         return {
             data,
@@ -71,9 +77,32 @@ export const RoomService = {
                 limit,
                 total,
                 totalPages: Math.ceil(total / limit),
-                count: rooms.length
+                count: data.length
             }
         }
+    },
+    getAvailableRooms: async () => {
+        const rooms = await Room.find().populate("representativeTenantId", "-password").lean();
+        
+        const roomIds = rooms.map(room => room._id);
+        const tenants = await Tenant.find({ roomId: { $in: roomIds }, isDeleted: false }).select("_id roomId").lean();
+
+        const data = rooms
+            .map(room => {
+                const roomTenants = tenants.filter(t => t.roomId?.toString() === room._id?.toString());
+                const representative = room.representativeTenantId || null;
+                const { representativeTenantId, ...rest } = room as any;
+                
+                return {
+                    ...rest,
+                    currentPeople: roomTenants.length,
+                    representative
+                };
+            })
+            .filter(room => room.currentPeople < room.maxPeople)
+            .sort((a, b) => (a.roomNumber || "").localeCompare(b.roomNumber || ""));
+
+        return data;
     },
     updateRoom: async (id: string, roomData: IRoom) => {
         const room = await Room.findByIdAndUpdate(id, roomData, { new: true });

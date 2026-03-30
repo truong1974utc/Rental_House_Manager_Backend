@@ -1,5 +1,4 @@
 import mongoose, { InferSchemaType, Schema } from "mongoose";
-import { SERVICE_TYPE, UNIT_SERVICE } from "../constants/enum.js";
 
 const serviceSchema = new Schema(
     {
@@ -9,7 +8,6 @@ const serviceSchema = new Schema(
         },
         unit: {
             type: String,
-            enum: UNIT_SERVICE,
             required: true
         },
         pricePerUnit: {
@@ -18,7 +16,6 @@ const serviceSchema = new Schema(
         },
         type: {
             type: String,
-            enum: SERVICE_TYPE,
             required: true
         }
     },

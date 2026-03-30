@@ -41,9 +41,9 @@ const tenantSchema = new Schema(
             enum: Object.values(GENDER),
             required: true
         },
-        isRepresent: {
-            type: Boolean,
-            default: false
+        role: {
+            type: String,
+            default: "tenant"
         },
         isDeleted: {
             type: Boolean,

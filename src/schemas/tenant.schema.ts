@@ -12,7 +12,6 @@ export const createTenantSchema = z.object({
         password: z.string().min(6, "Password must be at least 6 characters"),
         birthDate: z.coerce.date({ message: "Birth date is required" }),
         gender: z.enum(GENDER, { message: "Gender is required" }),
-        isRepresent: z.boolean().optional(),
     })
 })
 
@@ -23,10 +22,10 @@ export const updateTenantSchema = z.object({
         phone: z.string().optional(),
         idCard: z.string().optional(),
         email: z.string().email("Invalid email").optional(),
+        password: z.string().min(6, "Password must be at least 6 characters").optional(),
         address: z.string().optional(),
         birthDate: z.coerce.date().optional(),
         gender: z.enum(GENDER).optional(),
-        isRepresent: z.boolean().optional(),
     })
 })
 

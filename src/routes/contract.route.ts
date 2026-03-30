@@ -6,8 +6,8 @@ import { createContractSchema, updateContractSchema } from "../schemas/contract.
 const router = Router();
 
 router.post("/", validate(createContractSchema), ContractController.createContract);
-router.get("/:id", ContractController.getContractById);
 router.get("/", ContractController.getAllContracts);
+router.get("/:id", ContractController.getContractById);
 router.put("/:id", validate(updateContractSchema), ContractController.updateContract);
 router.delete("/:id", ContractController.deleteContract);
 

@@ -8,7 +8,7 @@ const contractSchema = new Schema(
             ref: "Room",
             required: true
         },
-        tenantId: {
+        representativeTenantId: {
             type: Schema.Types.ObjectId,
             ref: "Tenant",
             required: true
@@ -24,6 +24,14 @@ const contractSchema = new Schema(
         deposit: {
             type: Number,
             required: true
+        },
+        monthlyRent: {
+            type: Number,
+            required: true
+        },
+        note: {
+            type: String,
+            default: ""
         },
         status: {
             type: String,

@@ -20,22 +20,18 @@ export const ContractService = {
             match.roomId = new mongoose.Types.ObjectId(query.roomId);
         }
 
-        if (query.tenantId) {
-            match.tenantId = new mongoose.Types.ObjectId(query.tenantId);
-        }
-
         const pipeline: any[] = [
             {
                 $lookup: {
                     from: "Tenants",
-                    localField: "tenantId",
+                    localField: "representativeTenantId",
                     foreignField: "_id",
-                    as: "tenant"
+                    as: "representativeTenant"
                 }
             },
             {
                 $unwind: {
-                    path: "$tenant",
+                    path: "$representativeTenant",
                     preserveNullAndEmptyArrays: true
                 }
             },
@@ -58,13 +54,19 @@ export const ContractService = {
                     ...match,
                     ...(query.search && {
                         $or: [
-                            { "tenant.fullName": { $regex: query.search, $options: "i" } },
-                            { "tenant.idCard": { $regex: query.search, $options: "i" } },
+                            { "representativeTenant.fullName": { $regex: query.search, $options: "i" } },
+                            { "representativeTenant.idCard": { $regex: query.search, $options: "i" } },
                             { "room.roomNumber": { $regex: query.search, $options: "i" } }
                         ]
                     })
                 }
             },
+            {
+                $addFields: {
+                    tenant: "$representativeTenant"
+                }
+            },
+            { $sort: { createdAt: -1 } },
             { $skip: skip },
             { $limit: limit }
         ];
@@ -90,27 +92,45 @@ export const ContractService = {
         };
     },
     createContract: async (contractData: CreateContractInput) => {
-        const existingContract = await Contract.findOne({
-            roomId: contractData.roomId
-        });
-        if (existingContract) {
-            throw new AlreadyExistsError("Contract for this room already exists");
-        }
         const contract = await Contract.create(contractData);
-        return contract;
+        const populated = await contract.populate([
+            { path: "roomId", select: "roomNumber type price maxPeople" },
+            { path: "representativeTenantId", select: "fullName phone idCard" }
+        ]);
+        const doc = populated.toObject ? populated.toObject() : populated;
+        return {
+            ...doc,
+            tenant: doc.representativeTenantId,
+            room: doc.roomId
+        };
     },
     getContractById: async (id: string) => {
         const contract = await Contract.findById(id)
-            .populate("roomId", "roomNumber type price")
-            .populate("tenantId", "fullName phone idCard");
+            .populate("roomId", "roomNumber type price maxPeople")
+            .populate("representativeTenantId", "fullName phone idCard");
         if (!contract) {
             throw new Error("Contract not found");
         }
-        return contract;
+        const doc = contract.toObject ? contract.toObject() : contract;
+        return {
+            ...doc,
+            tenant: doc.representativeTenantId,
+            room: doc.roomId
+        };
     },
     updateContract: async (id: string, contractData: UpdateContractInput) => {
-        const contract = await Contract.findByIdAndUpdate(id, contractData, { new: true });
-        return contract;
+        const contract = await Contract.findByIdAndUpdate(id, contractData, { new: true })
+            .populate("roomId", "roomNumber type price maxPeople")
+            .populate("representativeTenantId", "fullName phone idCard");
+        if (!contract) {
+            throw new Error("Contract not found");
+        }
+        const doc = contract.toObject ? contract.toObject() : contract;
+        return {
+            ...doc,
+            tenant: doc.representativeTenantId,
+            room: doc.roomId
+        };
     },
     deleteContract: async (id: string) => {
         const contract = await Contract.findByIdAndDelete(id);

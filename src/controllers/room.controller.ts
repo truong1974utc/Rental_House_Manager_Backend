@@ -31,6 +31,14 @@ export const RoomController = {
             meta: result.meta
         });
     }),
+    getAvailableRooms: asyncHandler(async (req: Request, res: Response) => {
+        const rooms = await RoomService.getAvailableRooms();
+        res.status(200).json({
+            success: true,
+            message: "Get available rooms successfully",
+            data: rooms
+        });
+    }),
     updateRoom: asyncHandler(async (req: Request<{ id: string }, CreateRoomInput>, res: Response) => {
         const room = await RoomService.updateRoom(req.params.id, req.body);
         res.status(200).json({

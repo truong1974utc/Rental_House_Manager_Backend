@@ -39,8 +39,7 @@ const seedDB = async () => {
             address: "Hanoi",
             password: hashedPassword,
             birthDate: new Date("1990-01-01"),
-            gender: GENDER.MALE,
-            isRepresent: true
+            gender: GENDER.MALE
         });
 
         console.log("Seed admin user succeeded:", adminUser.email, "Password: 123456");
