@@ -5,6 +5,7 @@ import contractRoutes from "./contract.route.js";
 import serviceRoutes from "./service.route.js";
 import invoiceRoutes from "./invoice.route.js";
 import authRoutes from "./auth.route.js";
+import meterReadingRoutes from "./meterReading.route.js";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use('/contracts', contractRoutes);
 router.use('/services', serviceRoutes);
 router.use('/invoices', invoiceRoutes);
 router.use('/auth', authRoutes);
+router.use('/meter-readings', meterReadingRoutes);
 
 export default router;

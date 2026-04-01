@@ -64,23 +64,48 @@ export const InvoiceService = {
                     from: "Services",
                     localField: "otherFees.serviceId",
                     foreignField: "_id",
-                    as: "service"
-                }
-            },
-            {
-                $unwind: {
-                    path: "$service",
-                    preserveNullAndEmptyArrays: true
+                    as: "serviceDetails"
                 }
             },
             {
                 $addFields: {
-                    "otherFees.serviceName": "$service.name"
+                    otherFees: {
+                        $map: {
+                            input: "$otherFees",
+                            as: "fee",
+                            in: {
+                                $mergeObjects: [
+                                    "$$fee",
+                                    {
+                                        serviceName: {
+                                            $let: {
+                                                vars: {
+                                                    matchedService: {
+                                                        $arrayElemAt: [
+                                                            {
+                                                                $filter: {
+                                                                    input: "$serviceDetails",
+                                                                    as: "sd",
+                                                                    cond: { $eq: ["$$sd._id", "$$fee.serviceId"] }
+                                                                }
+                                                            },
+                                                            0
+                                                        ]
+                                                    }
+                                                },
+                                                in: "$$matchedService.name"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
                 }
             },
             {
                 $project: {
-                    service: 0,
+                    serviceDetails: 0
                 }
             },
             {
@@ -95,6 +120,7 @@ export const InvoiceService = {
                     })
                 }
             },
+            { $sort: { createdAt: -1 } },
             { $skip: skip },
             { $limit: limit }
         ];
@@ -135,7 +161,8 @@ export const InvoiceService = {
     getInvoiceById: async (id: string) => {
         const invoice = await Invoice.findById(id)
             .populate("roomId", "roomNumber type price")
-            .populate("tenantId", "fullName phone idCard");
+            .populate("tenantId", "fullName phone idCard")
+            .populate("otherFees.serviceId", "name unit");
         if (!invoice) {
             throw new Error("Invoice not found");
         }

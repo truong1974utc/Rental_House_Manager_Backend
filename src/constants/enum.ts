@@ -27,3 +27,8 @@ export enum MAX_PEOPLE {
     TWO = 2,
     FOUR = 4
 }
+
+export enum METER_READING_STATUS {
+    UNBILLED = 'UNBILLED',
+    BILLED = 'BILLED'
+}
