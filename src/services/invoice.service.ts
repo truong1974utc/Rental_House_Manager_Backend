@@ -2,6 +2,9 @@ import { Invoice } from "../models/Invoice.js";
 import { IInvoiceQuery } from "../interfaces/Query.js";
 import { CreateInvoiceInput, UpdateInvoiceInput } from "../schemas/invoice.schema.js";
 import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
+import { PaymentService } from "./payment.service.js";
+
+import mongoose from "mongoose";
 
 export const InvoiceService = {
     getAllInvoices: async (query: IInvoiceQuery) => {
@@ -11,23 +14,23 @@ export const InvoiceService = {
         const match: any = {};
 
         if (query.roomId) {
-            match.roomId = query.roomId;
+            match.roomId = new mongoose.Types.ObjectId(query.roomId);
         }
 
         if (query.tenantId) {
-            match.tenantId = query.tenantId;
+            match.tenantId = new mongoose.Types.ObjectId(query.tenantId);
         }
 
         if (query.month) {
-            match.month = query.month;
+            match.month = Number(query.month);
         }
 
-        if (query.year) {
-            match.year = query.year;
+        if (query.year !== undefined) {
+            match.year = Number(query.year);
         }
 
         if (query.isPaid !== undefined) {
-            match.isPaid = query.isPaid;
+            match.isPaid = query.isPaid === 'true' || String(query.isPaid) === 'true';
         }
 
         const pipeline: any[] = [
@@ -156,6 +159,15 @@ export const InvoiceService = {
             throw new AlreadyExistsError("Invoice for this room, tenant, month and year already exists");
         }
         const invoice = await Invoice.create(invoiceData);
+
+        // Tự động tạo thanh toán MoMo khi tạo hóa đơn
+        try {
+            await PaymentService.createPaymentForInvoice(invoice);
+        } catch (error) {
+            console.error("Lỗi khi tự động tạo thanh toán:", error);
+            // Không chặn tiến trình tạo hóa đơn nếu có lỗi tạo link thanh toán
+        }
+
         return invoice;
     },
     getInvoiceById: async (id: string) => {
