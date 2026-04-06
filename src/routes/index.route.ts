@@ -7,6 +7,7 @@ import invoiceRoutes from "./invoice.route.js";
 import authRoutes from "./auth.route.js";
 import meterReadingRoutes from "./meterReading.route.js";
 import paymentRoutes from "./payment.route.js";
+import debtRoutes from "./debt.route.js";
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/invoices', invoiceRoutes);
 router.use('/auth', authRoutes);
 router.use('/meter-readings', meterReadingRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/debts', debtRoutes);
 
 export default router;
