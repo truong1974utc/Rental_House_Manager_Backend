@@ -12,22 +12,49 @@ export const DebtController = {
       .populate("roomId", "roomNumber")
       .populate("representativeTenantId", "fullName");
 
-    const result = [];
+    const roomMap = new Map();
 
     for (let contract of contracts) {
-      const roomId = contract.roomId?._id || contract.roomId;
-      const tenantId = contract.representativeTenantId?._id || contract.representativeTenantId;
+      const roomIdStr = contract.roomId?._id?.toString() || contract.roomId?.toString();
+      const tenantIdStr = contract.representativeTenantId?._id?.toString() || contract.representativeTenantId?.toString();
 
       const roomNumber = (contract.roomId as any)?.roomNumber || "N/A";
       const tenantName = (contract.representativeTenantId as any)?.fullName || "N/A";
 
-      // Lấy danh sách hóa đơn chưa thanh toán của phòng này
+      if (!roomMap.has(roomIdStr)) {
+        roomMap.set(roomIdStr, {
+          id: roomIdStr, // Sử dụng roomId làm id duy nhất để người thuê 1 phòng chỉ hiện 1 lần
+          name: tenantName,
+          roomNumber: roomNumber,
+          deposit: {
+            amount: 0,
+            date: contract.startDate,
+            status: "held"
+          },
+          debts: []
+        });
+      }
+
+      const roomData = roomMap.get(roomIdStr);
+      // Cộng dồn tiền cọc nếu có nhiều hợp đồng cho 1 phòng
+      roomData.deposit.amount += (contract.deposit || 0);
+
+      // Nếu có tên người khác thì nối thêm vào hiển thị ("Nguyễn Văn A & Nguyễn Văn B")
+      if (tenantName !== "N/A" && !roomData.name.includes(tenantName)) {
+        roomData.name += ` & ${tenantName}`;
+      }
+    }
+
+    const result = [];
+
+    // Lấy hóa đơn chưa thanh toán cho các phòng đã được gộp
+    for (let [roomId, roomData] of roomMap.entries()) {
       const unpaidInvoices = await Invoice.find({
         roomId: roomId,
         isPaid: false
       }).sort({ createdAt: -1 });
 
-      const debts = unpaidInvoices.map((inv) => ({
+      roomData.debts = unpaidInvoices.map((inv) => ({
         id: inv._id,
         invoiceCode: `HD-${inv.month}-${inv.year}-${inv.roomId.toString().substring(0, 4)}`,
         period: `${inv.month}/${inv.year}`,
@@ -36,18 +63,7 @@ export const DebtController = {
         status: "unpaid"
       }));
 
-      // Nếu có nợ tiền thì cũng cho vào danh sách tổng hợp công nợ (hoặc show hết phụ thuộc UI cần)
-      result.push({
-        id: contract._id.toString(), // Sử dụng contract._id làm id duy nhất thay vì tenantId để tránh trùng lặp khi 1 người mướn nhiều phòng
-        name: tenantName,
-        roomNumber: roomNumber,
-        deposit: {
-          amount: contract.deposit,
-          date: contract.startDate,
-          status: "held"
-        },
-        debts: debts
-      });
+      result.push(roomData);
     }
 
     res.status(200).json({
