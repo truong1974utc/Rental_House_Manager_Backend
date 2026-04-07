@@ -30,7 +30,7 @@ export const InvoiceService = {
         }
 
         if (query.isPaid !== undefined) {
-            match.isPaid = query.isPaid === 'true' || String(query.isPaid) === 'true';
+            match.isPaid = String(query.isPaid) === 'true';
         }
 
         const pipeline: any[] = [
