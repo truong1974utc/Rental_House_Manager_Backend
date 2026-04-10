@@ -10,6 +10,7 @@ import paymentRoutes from "./payment.route.js";
 import debtRoutes from "./debt.route.js";
 import messageRoutes from "./message.route.js";
 import reportRoutes from "./report.route.js";
+import homeRoutes from "./home.route.js";
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use('/payments', paymentRoutes);
 router.use('/debts', debtRoutes);
 router.use('/messages', messageRoutes);
 router.use('/reports', reportRoutes);
+router.use('/home', homeRoutes);
 
 export default router;
