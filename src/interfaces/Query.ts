@@ -25,6 +25,7 @@ export interface ITenantQuery {
     limit?: number;
     search?: string;
     roomId?: string;
+    role?: string;
 }
 
 export interface IServiceQuery {

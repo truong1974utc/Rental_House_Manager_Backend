@@ -26,6 +26,10 @@ export const TenantService = {
             filter.roomId = new mongoose.Types.ObjectId(query.roomId);
         }
 
+        if (query.role) {
+            filter.role = query.role;
+        }
+
         const [tenants, total] = await Promise.all([
             Tenant.find(filter).populate('roomId').skip(skip).limit(limit),
             Tenant.countDocuments(filter)

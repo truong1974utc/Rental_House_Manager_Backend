@@ -12,9 +12,9 @@ export const HomeService = {
     
     const occupancyRate = totalRooms > 0 ? Math.round((occupied / totalRooms) * 100) : 0;
     
-    const activeTenants = await Tenant.countDocuments({ isActive: true }); 
+    const activeTenants = await Tenant.countDocuments({ isActive: true, role: "tenant" }); 
     // Fallback to all tenants if isActive isn't used correctly. Let's just use all tenants for now
-    const totalTenants = await Tenant.countDocuments();
+    const totalTenants = await Tenant.countDocuments({ role: "tenant" });
 
     const activeContracts = await Contract.countDocuments({ status: "ACTIVE" });
 
