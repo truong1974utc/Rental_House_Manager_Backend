@@ -11,6 +11,7 @@ import debtRoutes from "./debt.route.js";
 import messageRoutes from "./message.route.js";
 import reportRoutes from "./report.route.js";
 import homeRoutes from "./home.route.js";
+import notificationRoutes from "./notification.route.js";
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use('/debts', debtRoutes);
 router.use('/messages', messageRoutes);
 router.use('/reports', reportRoutes);
 router.use('/home', homeRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

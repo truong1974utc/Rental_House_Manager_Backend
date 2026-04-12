@@ -38,3 +38,13 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
         next(error);
     }
 };
+
+export const authorizeRoles = (...roles: string[]) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        const tenant = (req as any).tenant;
+        if (!tenant || !tenant.role || !roles.includes(tenant.role)) {
+            return next(new UnauthorizedError("Bạn không có quyền thực hiện hành động này"));
+        }
+        next();
+    };
+};

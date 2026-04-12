@@ -32,3 +32,10 @@ export enum METER_READING_STATUS {
     UNBILLED = 'UNBILLED',
     BILLED = 'BILLED'
 }
+
+export enum NOTIFICATION_TYPE {
+    INVOICE = 'invoice',
+    PAYMENT = 'payment',
+    MAINTENANCE = 'maintenance',
+    GENERAL = 'general'
+}

@@ -3,7 +3,8 @@ import { IInvoiceQuery } from "../interfaces/Query.js";
 import { CreateInvoiceInput, UpdateInvoiceInput } from "../schemas/invoice.schema.js";
 import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
 import { PaymentService } from "./payment.service.js";
-
+import { NotificationService } from "./notification.service.js";
+import { NOTIFICATION_TYPE } from "../constants/enum.js";
 import mongoose from "mongoose";
 
 export const InvoiceService = {
@@ -166,6 +167,19 @@ export const InvoiceService = {
         } catch (error) {
             console.error("Lỗi khi tự động tạo thanh toán:", error);
             // Không chặn tiến trình tạo hóa đơn nếu có lỗi tạo link thanh toán
+        }
+        
+        // Tự động tạo thông báo
+        try {
+            await NotificationService.createNotification({
+                title: `Hóa đơn tháng ${invoice.month}/${invoice.year} đã được tạo`,
+                message: `Hóa đơn phòng của bạn tháng ${invoice.month}/${invoice.year} với tổng số tiền ${invoice.totalAmount?.toLocaleString('vi-VN')}đ. Vui lòng kiểm tra và thanh toán.`,
+                type: NOTIFICATION_TYPE.INVOICE,
+                roomId: invoice.roomId.toString(),
+                isGlobal: false
+            });
+        } catch (error) {
+            console.error("Lỗi khi tự động tạo thông báo:", error);
         }
 
         return invoice;
