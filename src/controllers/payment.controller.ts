@@ -17,5 +17,11 @@ export const PaymentController = {
         const { id } = req.params;
         const payments = await Payment.find({ invoiceId: id }).sort({ createdAt: -1 });
         res.status(200).json(payments);
+    }),
+
+    mockWebhookSuccess: asyncHandler(async (req: Request, res: Response) => {
+        const { invoiceId } = req.body;
+        const result = await PaymentService.mockWebhookSuccess(invoiceId);
+        res.status(result.status).json({ message: result.message });
     })
 };

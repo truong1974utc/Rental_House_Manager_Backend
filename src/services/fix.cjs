@@ -1,30 +1,34 @@
-import crypto from 'crypto';
+const fs = require('fs');
+
+const content = `import crypto from 'crypto';
 import { Payment } from '../models/Payment.js';
 import { Invoice } from '../models/Invoice.js';
+
+// ====== CẤU HÌNH MOMO CÁ NHÂN ======
+const personalMoMoConfig = {
+    phone: process.env.MOMO_PHONE || '0354718501', 
+    name: process.env.MOMO_NAME || 'NGUYEN QUANG TRUONG', 
+    email: '' 
+};
 
 export const PaymentService = {
     createPaymentForInvoice: async (invoice: any) => {
         try {
-            // Cập nhật cấu hình ngay trong hàm để lấy được process.env sau khi dotenv.config() chạy
-            const vietQrConfig = {
-                bankId: process.env.VIETQR_BANK_ID, 
-                accountNo: process.env.VIETQR_ACCOUNT_NO, 
-                accountName: process.env.VIETQR_ACCOUNT_NAME
-            };
-
-            const orderId = `HD_${invoice.roomId}_${invoice.month}${invoice.year}`;
+            const orderId = \`HD_\${invoice.roomId}_\${invoice.month}\${invoice.year}\`;
             const amount = invoice.totalAmount;
-            const orderInfo = `Thanh toan HD thang ${invoice.month} nam ${invoice.year}`;
+            const orderInfo = \`Thanh toan HD \${invoice.month}/\${invoice.year}\`;
 
-            const qrCodeUrl = `https://img.vietqr.io/image/${vietQrConfig.bankId}-${vietQrConfig.accountNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(orderInfo)}&accountName=${encodeURIComponent(vietQrConfig.accountName || '')}`;
-            const payUrl = qrCodeUrl;
+            const rawMoMoString = \`2|99|\${personalMoMoConfig.phone}|\${personalMoMoConfig.name}|\${personalMoMoConfig.email}|0|0|\${amount}|\${orderInfo}|transfer_myqr\`;
+
+            const qrCodeUrl = \`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=\${encodeURIComponent(rawMoMoString)}\`;
+            const payUrl = \`momo://app?action=payWithApp&is_deeplink=true&phone=\${personalMoMoConfig.phone}&amount=\${amount}&note=\${encodeURIComponent(orderInfo)}\`;
 
             const payment = await Payment.create({
                 invoiceId: invoice._id,
                 roomId: invoice.roomId,
                 tenantId: invoice.tenantId,
                 amount: invoice.totalAmount,
-                paymentMethod: 'TRANSFER',
+                paymentMethod: 'MOMO',
                 status: 'PENDING',
                 transactionId: orderId,
                 payUrl: payUrl,
@@ -33,13 +37,13 @@ export const PaymentService = {
 
             return payment;
         } catch (error) {
-            console.error('Lỗi tạo thanh toán VietQR:', error);
+            console.error('Lỗi tạo thanh toán MoMo:', error);
             const failedPayment = await Payment.create({
                 invoiceId: invoice._id,
                 roomId: invoice.roomId,
                 tenantId: invoice.tenantId,
                 amount: invoice.totalAmount,
-                paymentMethod: 'TRANSFER',
+                paymentMethod: 'MOMO',
                 status: 'FAILED'
             });
             return failedPayment;
@@ -65,4 +69,7 @@ export const PaymentService = {
 
         return { status: 200, message: 'Mock thanh toán thành công' };
     }
-};
+};`;
+
+fs.writeFileSync('d:/DO AN/Rental_House_Manager_Backend/src/services/payment.service.ts', content, 'utf8');
+console.log('Fix applied successfully!');

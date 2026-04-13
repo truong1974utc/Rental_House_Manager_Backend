@@ -11,3 +11,5 @@ router.post("/momo-ipn", PaymentController.handleMoMoIPN);
 router.get("/invoice/:id", authMiddleware, PaymentController.getPaymentsByInvoiceId);
 
 export default router;
+
+router.post('/mock-webhook', PaymentController.mockWebhookSuccess);

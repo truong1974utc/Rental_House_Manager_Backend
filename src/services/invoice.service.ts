@@ -161,9 +161,10 @@ export const InvoiceService = {
         }
         const invoice = await Invoice.create(invoiceData);
 
+        let paymentDetails = null;
         // Tự động tạo thanh toán MoMo khi tạo hóa đơn
         try {
-            await PaymentService.createPaymentForInvoice(invoice);
+            paymentDetails = await PaymentService.createPaymentForInvoice(invoice);
         } catch (error) {
             console.error("Lỗi khi tự động tạo thanh toán:", error);
             // Không chặn tiến trình tạo hóa đơn nếu có lỗi tạo link thanh toán
@@ -182,7 +183,11 @@ export const InvoiceService = {
             console.error("Lỗi khi tự động tạo thông báo:", error);
         }
 
-        return invoice;
+        const invoiceObject = invoice.toObject();
+        return {
+            ...invoiceObject,
+            payment: paymentDetails
+        };
     },
     getInvoiceById: async (id: string) => {
         const invoice = await Invoice.findById(id)

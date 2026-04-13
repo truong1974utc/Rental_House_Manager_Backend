@@ -39,6 +39,10 @@ const paymentSchema = new Schema(
             type: String, // url to redirect user to MoMo
             required: false
         },
+        qrCodeUrl: {
+            type: String,
+            required: false
+        },
         paymentDate: {
             type: Date,
             required: false
