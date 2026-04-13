@@ -2,8 +2,8 @@ import { z } from "zod";
 
 export const loginSchema = z.object({
     body: z.object({
-        email: z.string().email("Invalid email"),
-        password: z.string().min(6, "Password must be at least 6 characters")
+        email: z.string().min(1, "Email or Phone is required"), // Changed from email() as user might use phone
+        password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự")
     })
 });
 

@@ -6,7 +6,7 @@ const tenantSchema = new Schema(
         roomId: {
             type: Schema.Types.ObjectId,
             ref: "Room",
-            required: true
+            required: function(this: any) { return this.role === "tenant"; }
         },
         fullName: {
             type: String,

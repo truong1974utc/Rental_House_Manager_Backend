@@ -59,7 +59,9 @@ export const TenantService = {
         
         // Hash password before saving
         const hashedPassword = await bcrypt.hash(tenantData.password, 10);
-        const dataToSave = { ...tenantData, password: hashedPassword, role: "tenant" };
+        // Default role is tenant if not provided
+        const role = tenantData.role || "tenant";
+        const dataToSave = { ...tenantData, password: hashedPassword, role };
 
         const tenant = await Tenant.create(dataToSave);
         return tenant;

@@ -9,15 +9,18 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "super_refresh_secr
 
 export const AuthService = {
     login: async (loginData: LoginInput) => {
-        const tenant = await Tenant.findOne({ email: loginData.email, isDeleted: false });
+        const tenant = await Tenant.findOne({
+            $or: [{ email: loginData.email }, { phone: loginData.email }],
+            isDeleted: false
+        });
         
         if (!tenant) {
-            throw new UnauthorizedError("Invalid email or password");
+            throw new UnauthorizedError("Tài khoản không tồn tại");
         }
 
         const isPasswordMatch = await bcrypt.compare(loginData.password, tenant.password);
         if (!isPasswordMatch) {
-            throw new UnauthorizedError("Invalid email or password");
+            throw new UnauthorizedError("Sai mật khẩu");
         }
 
         const accessToken = jwt.sign(
