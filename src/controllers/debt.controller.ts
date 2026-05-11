@@ -7,8 +7,14 @@ import { STATUS } from "../constants/enum.js";
 
 export const DebtController = {
   getDepositAndDebt: asyncHandler(async (req: Request, res: Response) => {
-    // Lấy tất cả hợp đồng đang ACTIVE (hoặc Hoạt động do dữ liệu cũ) để xác định tiền cọc và thông tin người thuê
-    const contracts = await Contract.find({ status: { $in: [STATUS.ACTIVE, "Hoạt động", "ACTIVE", "active", "hoạt động"] } })
+    // Lấy tất cả hợp đồng đang ACTIVE và còn hạn để xác định tiền cọc và thông tin người thuê
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const contracts = await Contract.find({ 
+      status: { $in: [STATUS.ACTIVE, "Hoạt động", "ACTIVE", "active", "hoạt động"] },
+      endDate: { $gte: today }
+    })
       .populate("roomId", "roomNumber")
       .populate("representativeTenantId", "fullName");
 
@@ -29,7 +35,7 @@ export const DebtController = {
           deposit: {
             amount: 0,
             date: contract.startDate,
-            status: "held"
+            status: (contract as any).depositStatus || "unpaid"
           },
           debts: []
         });

@@ -34,6 +34,11 @@ const invoiceSchema = new Schema(
             ref: "Tenant",
             required: true
         },
+        type: {
+            type: String,
+            enum: ["RENT", "DEPOSIT"],
+            default: "RENT"
+        },
         month: {
             type: Number,
             required: true
@@ -57,7 +62,7 @@ const invoiceSchema = new Schema(
         },
         paymentDate: {
             type: Date,
-            required: true
+            required: false
         }
     },
     {

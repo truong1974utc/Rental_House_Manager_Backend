@@ -11,13 +11,14 @@ export const createInvoiceSchema = z.object({
     body: z.object({
         roomId: z.string().min(1, "Room ID is required"),
         tenantId: z.string().min(1, "Tenant ID is required"),
+        type: z.enum(["RENT", "DEPOSIT"]).optional().default("RENT"),
         month: z.number().int().min(1).max(12, "Month must be between 1 and 12"),
         year: z.number().int().min(2000, "Year must be greater than or equal to 2000"),
         roomPrice: z.number().min(0, "Room price must be greater than or equal to 0"),
         otherFees: z.array(otherFeeSchema).optional().default([]),
         totalAmount: z.number().min(0, "Total amount must be greater than or equal to 0"),
         isPaid: z.boolean({ message: "isPaid is required" }),
-        paymentDate: z.coerce.date({ message: "Payment date is required" }),
+        paymentDate: z.coerce.date().optional(),
     })
 })
 
@@ -25,6 +26,7 @@ export const updateInvoiceSchema = z.object({
     body: z.object({
         roomId: z.string().optional(),
         tenantId: z.string().optional(),
+        type: z.enum(["RENT", "DEPOSIT"]).optional(),
         month: z.number().int().min(1).max(12).optional(),
         year: z.number().int().min(2000).optional(),
         roomPrice: z.number().min(0).optional(),

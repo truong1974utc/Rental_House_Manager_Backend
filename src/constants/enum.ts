@@ -20,7 +20,8 @@ export enum STATUS {
     ACTIVE = 'ACTIVE',
     EXPIRED = 'EXPIRED',
     PENDING = 'PENDING',
-    CANCELLED = 'CANCELLED'
+    CANCELLED = 'CANCELLED',
+    TERMINATED = 'TERMINATED'
 }
 
 export enum MAX_PEOPLE {
@@ -31,6 +32,11 @@ export enum MAX_PEOPLE {
 export enum METER_READING_STATUS {
     UNBILLED = 'UNBILLED',
     BILLED = 'BILLED'
+}
+
+export enum INVOICE_TYPE {
+    RENT = 'RENT',
+    DEPOSIT = 'DEPOSIT'
 }
 
 export enum NOTIFICATION_TYPE {

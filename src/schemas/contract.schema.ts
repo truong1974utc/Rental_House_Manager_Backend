@@ -8,9 +8,10 @@ export const createContractSchema = z.object({
         startDate: z.coerce.date({ message: "Start date is required" }),
         endDate: z.coerce.date({ message: "End date is required" }),
         deposit: z.number().min(0, "Deposit must be greater than or equal to 0"),
+        depositStatus: z.enum(["unpaid", "held", "refunded", "deducted"]).default("unpaid"),
         monthlyRent: z.number().min(0, "Monthly rent must be greater than or equal to 0"),
         note: z.string().optional().default(""),
-        status: z.enum(STATUS).default(STATUS.ACTIVE)
+        status: z.nativeEnum(STATUS).default(STATUS.ACTIVE)
     }).refine(data => data.endDate > data.startDate, {
         message: "End date must be after start date",
         path: ["endDate"],
@@ -24,9 +25,10 @@ export const updateContractSchema = z.object({
         startDate: z.coerce.date().optional(),
         endDate: z.coerce.date().optional(),
         deposit: z.number().min(0).optional(),
+        depositStatus: z.enum(["unpaid", "held", "refunded", "deducted"]).optional(),
         monthlyRent: z.number().min(0).optional(),
         note: z.string().optional(),
-        status: z.enum(STATUS).optional(),
+        status: z.nativeEnum(STATUS).optional(),
     })
 })
 

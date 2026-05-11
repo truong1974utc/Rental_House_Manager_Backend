@@ -23,7 +23,11 @@ export const TenantService = {
         }
 
         if (query.roomId) {
-            filter.roomId = new mongoose.Types.ObjectId(query.roomId);
+            if (query.roomId === "none") {
+                filter.roomId = null;
+            } else {
+                filter.roomId = new mongoose.Types.ObjectId(query.roomId);
+            }
         }
 
         if (query.role) {

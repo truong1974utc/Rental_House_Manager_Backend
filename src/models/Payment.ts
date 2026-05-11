@@ -23,8 +23,8 @@ const paymentSchema = new Schema(
         },
         paymentMethod: {
             type: String,
-            enum: ["CASH", "TRANSFER", "MOMO"],
-            default: "MOMO"
+            enum: ["CASH", "TRANSFER"],
+            default: "TRANSFER"
         },
         status: {
             type: String,
@@ -32,11 +32,11 @@ const paymentSchema = new Schema(
             default: "PENDING"
         },
         transactionId: {
-            type: String, // e.g. momo orderId
+            type: String, // e.g. orderId
             required: false
         },
         payUrl: {
-            type: String, // url to redirect user to MoMo
+            type: String, // url to redirect user to payment app
             required: false
         },
         qrCodeUrl: {

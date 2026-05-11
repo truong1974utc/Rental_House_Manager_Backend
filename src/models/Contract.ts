@@ -25,6 +25,11 @@ const contractSchema = new Schema(
             type: Number,
             required: true
         },
+        depositStatus: {
+            type: String,
+            enum: ["unpaid", "held", "refunded", "deducted"],
+            default: "unpaid"
+        },
         monthlyRent: {
             type: Number,
             required: true
@@ -35,7 +40,7 @@ const contractSchema = new Schema(
         },
         status: {
             type: String,
-            enum: STATUS,
+            enum: Object.values(STATUS),
             default: STATUS.ACTIVE
         }
     },

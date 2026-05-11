@@ -3,6 +3,7 @@ import { IContractQuery } from "../interfaces/Query.js";
 import { CreateContractInput, UpdateContractInput } from "../schemas/contract.schema.js";
 import mongoose from "mongoose";
 import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
+import { InvoiceService } from "./invoice.service.js";
 
 export const ContractService = {
     getAllContracts: async (query: IContractQuery) => {
@@ -93,6 +94,37 @@ export const ContractService = {
     },
     createContract: async (contractData: CreateContractInput) => {
         const contract = await Contract.create(contractData);
+
+        if (contractData.deposit > 0) {
+            const currentDate = new Date();
+            try {
+                await InvoiceService.createInvoice({
+                    roomId: contractData.roomId,
+                    tenantId: contractData.representativeTenantId,
+                    type: "DEPOSIT",
+                    month: currentDate.getMonth() + 1,
+                    year: currentDate.getFullYear(),
+                    roomPrice: 0,
+                    otherFees: [],
+                    totalAmount: contractData.deposit,
+                    isPaid: false
+                });
+            } catch (error) {
+                console.error("Lỗi khi tạo hóa đơn tiền cọc:", error);
+            }
+        }
+
+        if (contractData.status === "ACTIVE") {
+            await mongoose.model("Room").findByIdAndUpdate(contractData.roomId, {
+                status: "OCCUPIED",
+                representativeTenantId: contractData.representativeTenantId
+            });
+            await mongoose.model("Tenant").findByIdAndUpdate(
+                contractData.representativeTenantId,
+                { roomId: contractData.roomId }
+            );
+        }
+
         const populated = await contract.populate([
             { path: "roomId", select: "roomNumber type price maxPeople" },
             { path: "representativeTenantId", select: "fullName phone idCard" }
@@ -125,6 +157,31 @@ export const ContractService = {
         if (!contract) {
             throw new Error("Contract not found");
         }
+
+        if (contractData.status === "TERMINATED" || contractData.status === "EXPIRED" || contractData.status === "CANCELLED") {
+            await mongoose.model("Room").findByIdAndUpdate(contract.roomId, { 
+                status: "AVAILABLE",
+                $unset: { representativeTenantId: "" }
+            });
+            await mongoose.model("Tenant").updateMany(
+                { roomId: contract.roomId },
+                { $unset: { roomId: "" } }
+            );
+        } else if (contractData.status === "ACTIVE") {
+            const updateRoomData: any = { status: "OCCUPIED" };
+            if (contract.representativeTenantId) {
+                updateRoomData.representativeTenantId = contract.representativeTenantId;
+            }
+            await mongoose.model("Room").findByIdAndUpdate(contract.roomId, updateRoomData);
+            
+            if (contract.representativeTenantId) {
+                await mongoose.model("Tenant").findByIdAndUpdate(
+                    contract.representativeTenantId,
+                    { roomId: contract.roomId }
+                );
+            }
+        }
+
         const doc = contract.toObject ? contract.toObject() : contract;
         return {
             ...doc,

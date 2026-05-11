@@ -150,19 +150,24 @@ export const InvoiceService = {
         };
     },
     createInvoice: async (invoiceData: CreateInvoiceInput) => {
-        const existingInvoice = await Invoice.findOne({
-            roomId: invoiceData.roomId,
-            tenantId: invoiceData.tenantId,
-            month: invoiceData.month,
-            year: invoiceData.year
-        });
-        if (existingInvoice) {
-            throw new AlreadyExistsError("Invoice for this room, tenant, month and year already exists");
+        // Chỉ kiểm tra trùng lặp với hóa đơn tiền phòng (RENT)
+        if (invoiceData.type !== "DEPOSIT") {
+            const existingInvoice = await Invoice.findOne({
+                roomId: invoiceData.roomId,
+                tenantId: invoiceData.tenantId,
+                month: invoiceData.month,
+                year: invoiceData.year,
+                type: invoiceData.type || "RENT"
+            });
+            if (existingInvoice) {
+                throw new AlreadyExistsError(`Invoice of type ${invoiceData.type || "RENT"} for this room, tenant, month and year already exists`);
+            }
         }
+        
         const invoice = await Invoice.create(invoiceData);
 
         let paymentDetails = null;
-        // Tự động tạo thanh toán MoMo khi tạo hóa đơn
+        // Tự động tạo thanh toán VietQR khi tạo hóa đơn
         try {
             paymentDetails = await PaymentService.createPaymentForInvoice(invoice);
         } catch (error) {
@@ -201,6 +206,17 @@ export const InvoiceService = {
     },
     updateInvoice: async (id: string, invoiceData: UpdateInvoiceInput) => {
         const invoice = await Invoice.findByIdAndUpdate(id, invoiceData, { new: true });
+        
+        // Nếu hóa đơn đã được thanh toán và là tiền cọc, thì cập nhật hợp đồng
+        if (invoice && invoice.isPaid && invoice.type === "DEPOSIT") {
+            const { Contract } = await import('../models/Contract.js');
+            await Contract.findOneAndUpdate(
+                { roomId: invoice.roomId, representativeTenantId: invoice.tenantId, depositStatus: "unpaid" },
+                { depositStatus: "held" },
+                { sort: { createdAt: -1 } }
+            );
+        }
+        
         return invoice;
     },
     deleteInvoice: async (id: string) => {

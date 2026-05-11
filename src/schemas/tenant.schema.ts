@@ -3,7 +3,7 @@ import { GENDER } from "../constants/enum.js";
 
 export const createTenantSchema = z.object({
     body: z.object({
-        roomId: z.string().optional(),
+        roomId: z.string().nullable().optional().transform(val => val === "" ? null : val),
         fullName: z.string().min(1, "Full name is required xxxxxx"),
         phone: z.string().min(1, "Phone is required"),
         idCard: z.string().min(1, "ID card is required"),
@@ -18,7 +18,7 @@ export const createTenantSchema = z.object({
 
 export const updateTenantSchema = z.object({
     body: z.object({
-        roomId: z.string().optional(),
+        roomId: z.string().nullable().optional().transform(val => val === "" ? null : val),
         fullName: z.string().optional(),
         phone: z.string().optional(),
         idCard: z.string().optional(),

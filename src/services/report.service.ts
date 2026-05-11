@@ -3,9 +3,14 @@ import { Room } from "../models/Room.js";
 import { Contract } from "../models/Contract.js";
 
 export const ReportService = {
-  getDashboardStats: async (year: number, month: number) => {
+  getDashboardStats: async (year: number, month: number | null) => {
+    const matchQuery: any = { year };
+    if (month !== null) {
+      matchQuery.month = month;
+    }
+
     const monthStatsAgg = await Invoice.aggregate([
-      { $match: { month, year } },
+      { $match: matchQuery },
       {
         $group: {
           _id: null,
@@ -42,9 +47,9 @@ export const ReportService = {
     });
 
     const roomPieAgg = await Invoice.aggregate([
-      { $match: { month, year } },
+      { $match: matchQuery },
       {
-        $lookup: { from: "rooms", localField: "roomId", foreignField: "_id", as: "room" }
+        $lookup: { from: "Rooms", localField: "roomId", foreignField: "_id", as: "room" }
       },
       { $unwind: { path: "$room", preserveNullAndEmptyArrays: true } },
       {
@@ -62,7 +67,7 @@ export const ReportService = {
       value: r.value
     }));
 
-    const roomDetailRaw = await Invoice.find({ month, year })
+    const roomDetailRaw = await Invoice.find(matchQuery)
       .populate("roomId", "roomNumber")
       .populate("tenantId", "fullName")
       .lean();
