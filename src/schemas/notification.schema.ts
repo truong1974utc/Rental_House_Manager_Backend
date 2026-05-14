@@ -9,6 +9,7 @@ export const createNotificationSchema = z.object({
         type: z.nativeEnum(NOTIFICATION_TYPE).optional().default(NOTIFICATION_TYPE.GENERAL),
         isGlobal: z.boolean().optional().default(false),
         roomId: z.string().optional().nullable().refine((val) => !val || Types.ObjectId.isValid(val), "RootId không hợp lệ"),
+        tenantId: z.string().optional().nullable().refine((val) => !val || Types.ObjectId.isValid(val), "TenantId không hợp lệ"),
     })
 });
 

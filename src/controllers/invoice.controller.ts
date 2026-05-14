@@ -31,6 +31,14 @@ export const InvoiceController = {
             meta: result.meta
         });
     }),
+    resendInvoiceNotification: asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
+        const notification = await InvoiceService.resendInvoiceNotification(req.params.id);
+        res.status(201).json({
+            success: true,
+            message: "Resend invoice notification successfully",
+            data: notification
+        });
+    }),
     updateInvoice: asyncHandler(async (req: Request<{ id: string }, {}, UpdateInvoiceInput>, res: Response) => {
         const invoice = await InvoiceService.updateInvoice(req.params.id, req.body);
         res.status(200).json({

@@ -13,7 +13,7 @@ export const NotificationController = {
             roomId = tenant.roomId?.toString() ?? "UNASSIGNED_ROOM";
         }
 
-        const notifications = await NotificationService.getNotifications(roomId);
+        const notifications = await NotificationService.getNotifications(roomId, tenant._id?.toString());
         res.status(200).json({
             success: true,
             data: notifications
@@ -50,7 +50,7 @@ export const NotificationController = {
             roomId = tenant.roomId?.toString() ?? "UNASSIGNED_ROOM";
         }
         
-        await NotificationService.markAllAsRead(roomId);
+        await NotificationService.markAllAsRead(roomId, tenant._id?.toString());
         res.status(200).json({
             success: true,
             message: "Đã đánh dấu tất cả là đã đọc"

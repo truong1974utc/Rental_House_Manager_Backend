@@ -181,7 +181,7 @@ export const InvoiceService = {
                 title: `Hóa đơn tháng ${invoice.month}/${invoice.year} đã được tạo`,
                 message: `Hóa đơn phòng của bạn tháng ${invoice.month}/${invoice.year} với tổng số tiền ${invoice.totalAmount?.toLocaleString('vi-VN')}đ. Vui lòng kiểm tra và thanh toán.`,
                 type: NOTIFICATION_TYPE.INVOICE,
-                roomId: invoice.roomId.toString(),
+                tenantId: invoice.tenantId.toString(),
                 isGlobal: false
             });
         } catch (error) {
@@ -203,6 +203,30 @@ export const InvoiceService = {
             throw new Error("Invoice not found");
         }
         return invoice;
+    },
+    resendInvoiceNotification: async (id: string) => {
+        const invoice = await Invoice.findById(id)
+            .populate("roomId", "roomNumber representativeTenantId")
+            .populate("tenantId", "fullName");
+
+        if (!invoice) {
+            throw new Error("Invoice not found");
+        }
+
+        const room = invoice.roomId as any;
+        const tenant = invoice.tenantId as any;
+        const roomNumber = room?.roomNumber ? ` phòng ${room.roomNumber}` : "";
+        const representativeTenantId = room?.representativeTenantId?.toString() || tenant?._id?.toString() || invoice.tenantId.toString();
+
+        const notification = await NotificationService.createNotification({
+            title: `Thông báo hóa đơn tháng ${invoice.month}/${invoice.year}`,
+            message: `Hóa đơn${roomNumber} tháng ${invoice.month}/${invoice.year} với tổng số tiền ${invoice.totalAmount?.toLocaleString('vi-VN')}đ. Vui lòng kiểm tra và thanh toán.`,
+            type: NOTIFICATION_TYPE.INVOICE,
+            tenantId: representativeTenantId,
+            isGlobal: false
+        });
+
+        return notification;
     },
     updateInvoice: async (id: string, invoiceData: UpdateInvoiceInput) => {
         const invoice = await Invoice.findByIdAndUpdate(id, invoiceData, { new: true });

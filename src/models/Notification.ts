@@ -26,6 +26,11 @@ const notificationSchema = new Schema(
             ref: "Room",
             default: null,
         },
+        tenantId: {
+            type: Schema.Types.ObjectId,
+            ref: "Tenant",
+            default: null,
+        },
         isRead: {
             type: Boolean,
             default: false,

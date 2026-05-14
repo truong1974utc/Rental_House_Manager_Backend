@@ -3,14 +3,15 @@ import { CreateNotificationInput, UpdateNotificationInput } from "../schemas/not
 import { Room } from "../models/Room.js";
 
 export const NotificationService = {
-    getNotifications: async (roomId?: string) => {
+    getNotifications: async (roomId?: string, tenantId?: string) => {
         let query: any = { isGlobal: true };
         
         if (roomId) {
             query = {
                 $or: [
                     { isGlobal: true },
-                    { roomId: roomId }
+                    { roomId: roomId },
+                    ...(tenantId ? [{ tenantId }] : [])
                 ]
             };
         } else {
@@ -18,7 +19,10 @@ export const NotificationService = {
             query = {};
         }
 
-        const notifications = await Notification.find(query).sort({ createdAt: -1 }).populate("roomId", "roomNumber");
+        const notifications = await Notification.find(query)
+            .sort({ createdAt: -1 })
+            .populate("roomId", "roomNumber")
+            .populate("tenantId", "fullName roomId");
         return notifications;
     },
 
@@ -39,10 +43,17 @@ export const NotificationService = {
         return notification;
     },
 
-    markAllAsRead: async (roomId?: string) => {
+    markAllAsRead: async (roomId?: string, tenantId?: string) => {
         let query: any = { isRead: false };
         if (roomId) {
-            query.roomId = roomId;
+            query = {
+                isRead: false,
+                $or: [
+                    { isGlobal: true },
+                    { roomId },
+                    ...(tenantId ? [{ tenantId }] : [])
+                ]
+            };
         }
         await Notification.updateMany(query, { isRead: true });
         return { success: true };
