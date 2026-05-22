@@ -2,14 +2,50 @@ import { Contract } from "../models/Contract.js";
 import { IContractQuery } from "../interfaces/Query.js";
 import { CreateContractInput, UpdateContractInput } from "../schemas/contract.schema.js";
 import mongoose from "mongoose";
-import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
-import { InvoiceService } from "./invoice.service.js";
+
+const CHECKOUT_STATUSES = ["ACTIVE", "TERMINATED"];
+const CHECKOUT_ENDED_STATUSES = ["TERMINATED", "CANCELLED"];
+
+const getStartOfToday = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+};
+
+const getEffectiveContractStatus = (contract: any) => {
+    if (contract.status === "CANCELLED") return "CANCELLED";
+    if (contract.status === "TERMINATED" || contract.status === "EXPIRED") return "TERMINATED";
+
+    const endDate = new Date(contract.endDate);
+    endDate.setHours(0, 0, 0, 0);
+
+    if (!Number.isNaN(endDate.getTime()) && endDate < getStartOfToday()) {
+        return "TERMINATED";
+    }
+
+    return contract.status;
+};
 
 export const ContractService = {
-    getAllContracts: async (query: IContractQuery) => {
+    getAllContracts: async (query: IContractQuery, options?: { checkoutOnly?: boolean }) => {
         const page = Number(query.page) || 1;
         const limit = Number(query.limit) || 10;
         const skip = (page - 1) * limit;
+        const checkoutOnly = options?.checkoutOnly || false;
+        const today = getStartOfToday();
+
+        if (checkoutOnly && query.status && !CHECKOUT_STATUSES.includes(query.status)) {
+            return {
+                data: [],
+                meta: {
+                    page,
+                    limit,
+                    total: 0,
+                    totalPages: 0,
+                    count: 0
+                }
+            };
+        }
 
         const match: any = {};
 
@@ -22,6 +58,38 @@ export const ContractService = {
         }
 
         const pipeline: any[] = [
+            {
+                $addFields: {
+                    status: {
+                        $cond: [
+                            {
+                                $or: [
+                                    { $in: ["$status", ["TERMINATED", "EXPIRED"]] },
+                                    {
+                                        $and: [
+                                            { $ne: ["$status", "CANCELLED"] },
+                                            { $lt: ["$endDate", today] }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "TERMINATED",
+                            "$status"
+                        ]
+                    }
+                }
+            },
+            ...(checkoutOnly ? [{
+                $addFields: {
+                    status: {
+                        $cond: [
+                            { $in: ["$status", CHECKOUT_ENDED_STATUSES] },
+                            "TERMINATED",
+                            "ACTIVE"
+                        ]
+                    }
+                }
+            }] : []),
             {
                 $lookup: {
                     from: "Tenants",
@@ -92,27 +160,11 @@ export const ContractService = {
             }
         };
     },
+    getCheckoutContracts: async (query: IContractQuery) => {
+        return ContractService.getAllContracts(query, { checkoutOnly: true });
+    },
     createContract: async (contractData: CreateContractInput) => {
         const contract = await Contract.create(contractData);
-
-        if (contractData.deposit > 0) {
-            const currentDate = new Date();
-            try {
-                await InvoiceService.createInvoice({
-                    roomId: contractData.roomId,
-                    tenantId: contractData.representativeTenantId,
-                    type: "DEPOSIT",
-                    month: currentDate.getMonth() + 1,
-                    year: currentDate.getFullYear(),
-                    roomPrice: 0,
-                    otherFees: [],
-                    totalAmount: contractData.deposit,
-                    isPaid: false
-                });
-            } catch (error) {
-                console.error("Lỗi khi tạo hóa đơn tiền cọc:", error);
-            }
-        }
 
         if (contractData.status === "ACTIVE") {
             await mongoose.model("Room").findByIdAndUpdate(contractData.roomId, {
@@ -132,6 +184,7 @@ export const ContractService = {
         const doc = populated.toObject ? populated.toObject() : populated;
         return {
             ...doc,
+            status: getEffectiveContractStatus(doc),
             tenant: doc.representativeTenantId,
             room: doc.roomId
         };
@@ -146,6 +199,7 @@ export const ContractService = {
         const doc = contract.toObject ? contract.toObject() : contract;
         return {
             ...doc,
+            status: getEffectiveContractStatus(doc),
             tenant: doc.representativeTenantId,
             room: doc.roomId
         };
@@ -185,6 +239,7 @@ export const ContractService = {
         const doc = contract.toObject ? contract.toObject() : contract;
         return {
             ...doc,
+            status: getEffectiveContractStatus(doc),
             tenant: doc.representativeTenantId,
             room: doc.roomId
         };

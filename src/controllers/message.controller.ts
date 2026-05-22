@@ -7,7 +7,7 @@ export const MessageController = {
         const messages = await Message.find()
             .populate({
                 path: 'sender',
-                select: 'fullName username role',
+                select: 'fullName username role roomId',
                 populate: { path: 'roomId', select: 'roomNumber' }
             })
             .sort({ createdAt: 1 })

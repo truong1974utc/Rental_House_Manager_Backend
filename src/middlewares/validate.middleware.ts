@@ -5,11 +5,16 @@ export const validate =
     (schema: ZodObject<any>) =>
         (req: Request, res: Response, next: NextFunction) => {
             try {
-                schema.parse({
+                const parsed = schema.parse({
                     body: req.body,
                     params: req.params,
                     query: req.query,
                 })
+
+                if (parsed.body !== undefined) {
+                    req.body = parsed.body;
+                }
+
                 next()
             } catch (error: any) {
                 if (error instanceof ZodError) {
@@ -24,5 +29,7 @@ export const validate =
                         errors: formattedErrors
                     });
                 }
+
+                next(error);
             }
         }

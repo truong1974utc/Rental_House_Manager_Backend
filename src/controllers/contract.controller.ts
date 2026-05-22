@@ -31,6 +31,16 @@ export const ContractController = {
             meta: result.meta
         });
     }),
+    getCheckoutContracts: asyncHandler(async (req: Request, res: Response) => {
+        const query: IContractQuery = req.query;
+        const result = await ContractService.getCheckoutContracts(query);
+        res.status(200).json({
+            success: true,
+            message: "Get checkout contracts successfully",
+            data: result.data,
+            meta: result.meta
+        });
+    }),
     updateContract: asyncHandler(async (req: Request<{ id: string }, {}, UpdateContractInput>, res: Response) => {
         const contract = await ContractService.updateContract(req.params.id, req.body);
         res.status(200).json({

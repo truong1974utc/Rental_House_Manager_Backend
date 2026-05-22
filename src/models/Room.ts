@@ -1,5 +1,5 @@
 import mongoose, { Schema, InferSchemaType } from "mongoose"
-import { ROOM_STATUS, MAX_PEOPLE, ROOM_TYPE } from "../constants/enum.js"
+import { ROOM_STATUS, ROOM_TYPE } from "../constants/enum.js"
 
 const roomSchema = new Schema(
     {
@@ -31,7 +31,11 @@ const roomSchema = new Schema(
         },
         maxPeople: {
             type: Number,
-            enum: MAX_PEOPLE,
+            min: 1,
+            validate: {
+                validator: Number.isInteger,
+                message: "Max people must be an integer",
+            },
             default: 2,
         },
         description: {

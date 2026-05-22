@@ -12,6 +12,7 @@ import messageRoutes from "./message.route.js";
 import reportRoutes from "./report.route.js";
 import homeRoutes from "./home.route.js";
 import notificationRoutes from "./notification.route.js";
+import uploadRoutes from "./upload.route.js";
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/messages', messageRoutes);
 router.use('/reports', reportRoutes);
 router.use('/home', homeRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/uploads', uploadRoutes);
 
 export default router;

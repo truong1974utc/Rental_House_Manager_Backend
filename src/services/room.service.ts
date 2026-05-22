@@ -1,7 +1,7 @@
-import { Room, IRoom } from "../models/Room.js";
+import { Room } from "../models/Room.js";
 import { Tenant } from "../models/Tenant.js";
 import { IRoomQuery } from "../interfaces/Query.js";
-import { CreateRoomInput } from "../schemas/room.schema.js";
+import { CreateRoomInput, UpdateRoomInput } from "../schemas/room.schema.js";
 import { AlreadyExistsError } from "../errors/alreadyExists.error.js";
 
 export const RoomService = {
@@ -104,8 +104,8 @@ export const RoomService = {
 
         return data;
     },
-    updateRoom: async (id: string, roomData: IRoom) => {
-        const room = await Room.findByIdAndUpdate(id, roomData, { new: true });
+    updateRoom: async (id: string, roomData: UpdateRoomInput) => {
+        const room = await Room.findByIdAndUpdate(id, roomData, { new: true, runValidators: true });
         return room;
     },
     deleteRoom: async (id: string) => {
