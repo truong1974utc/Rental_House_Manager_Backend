@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Contract } from "../models/Contract.js";
 import { Invoice } from "../models/Invoice.js";
+import mongoose from "mongoose";
 
 import { STATUS } from "../constants/enum.js";
 
@@ -76,6 +77,43 @@ export const DebtController = {
       success: true,
       message: "Lấy thông tin cọc/công nợ thành công",
       data: result
+    });
+  }),
+  confirmDepositReceipt: asyncHandler(async (req: Request<{ roomId: string }>, res: Response) => {
+    const { roomId } = req.params;
+
+    if (!mongoose.isValidObjectId(roomId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Phòng không hợp lệ"
+      });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const result = await Contract.updateMany(
+      {
+        roomId,
+        status: { $in: [STATUS.ACTIVE, "Hoạt động", "ACTIVE", "active", "hoạt động"] },
+        endDate: { $gte: today },
+        deposit: { $gt: 0 },
+        depositStatus: { $in: ["unpaid", null] }
+      },
+      { $set: { depositStatus: "held" } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Không có tiền cọc chưa nhận để xác nhận"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Đã xác nhận nhận tiền cọc",
+      data: { updatedContracts: result.modifiedCount }
     });
   })
 };
