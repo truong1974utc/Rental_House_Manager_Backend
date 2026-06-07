@@ -16,7 +16,12 @@ export const HomeService = {
     // Fallback to all tenants if isActive isn't used correctly. Let's just use all tenants for now
     const totalTenants = await Tenant.countDocuments({ role: "tenant" });
 
-    const activeContracts = await Contract.countDocuments({ status: "ACTIVE" });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const activeContracts = await Contract.countDocuments({ 
+        status: "ACTIVE",
+        endDate: { $gte: today } 
+    });
 
     const invoices = await Invoice.find({ year }).lean();
     
