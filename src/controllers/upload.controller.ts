@@ -27,6 +27,8 @@ const ALLOWED_EXTENSIONS = new Set([
 const ALLOWED_CONTENT_TYPES = new Set([
     "image/png",
     "image/jpeg",
+    "image/jpg",
+    "image/pjpeg",
     "image/webp",
     "image/gif",
     "application/pdf",
@@ -40,6 +42,7 @@ const ALLOWED_CONTENT_TYPES = new Set([
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     "application/zip",
     "application/x-zip-compressed",
+    "application/vnd.rar",
     "application/x-rar-compressed",
     "application/octet-stream"
 ]);
@@ -62,9 +65,14 @@ const getRequestOrigin = (req: Request) => `${req.protocol}://${req.get("host")}
 
 export const UploadController = {
     uploadChatFile: asyncHandler(async (req: Request, res: Response) => {
-        const fileBuffer = req.body;
-        const originalName = sanitizeOriginalName(decodeFileName(req.headers["x-file-name"]));
-        const contentType = String(req.headers["content-type"] || "application/octet-stream").split(";")[0].toLowerCase();
+        const uploadedFile = (req as Request & { file?: Express.Multer.File }).file;
+        const fileBuffer = uploadedFile?.buffer || req.body;
+        const originalName = sanitizeOriginalName(
+            uploadedFile?.originalname || decodeFileName(req.headers["x-file-name"])
+        );
+        const contentType = String(
+            uploadedFile?.mimetype || req.headers["content-type"] || "application/octet-stream"
+        ).split(";")[0].toLowerCase();
         const extension = path.extname(originalName).toLowerCase();
 
         if (!Buffer.isBuffer(fileBuffer) || fileBuffer.length === 0) {

@@ -3,9 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { LoginInput } from "../schemas/auth.schema.js";
 import { UnauthorizedError } from "../errors/unauthorized.error.js";
-
-const JWT_SECRET = process.env.JWT_SECRET || "super_secret_key_from_antigravity";
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "super_refresh_secret_key_from_antigravity";
+import { JWT_REFRESH_SECRET, JWT_SECRET } from "../config/env.js";
 
 export const AuthService = {
     login: async (loginData: LoginInput) => {

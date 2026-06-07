@@ -1,5 +1,4 @@
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
 import jwt from 'jsonwebtoken';
@@ -11,11 +10,10 @@ import indexRoutes from './routes/index.route.js';
 import { Message } from './models/Message.js';
 import { Tenant } from './models/Tenant.js';
 import { CHAT_ACCESS_DENIED_MESSAGE, hasChatAccess } from './utils/chatAccess.js';
+import { JWT_SECRET } from './config/env.js';
 
-dotenv.config();
 connectDB();
 
-const JWT_SECRET = process.env.JWT_SECRET || "super_secret_key_from_antigravity";
 const app = express();
 const httpServer = createServer(app);
 const isUploadedChatUrl = (value: string) => {

@@ -2,8 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { UnauthorizedError } from "../errors/unauthorized.error.js";
 import { Tenant } from "../models/Tenant.js";
-
-const JWT_SECRET = process.env.JWT_SECRET || "super_secret_key_from_antigravity";
+import { JWT_SECRET } from "../config/env.js";
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     try {
